@@ -21,21 +21,24 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private static final String SERVER_URL = "http://192.168.1.8/CRUDPHP/create.php"; // Assuming your server is running locally
+    private static final String UPDATE_URL = "http://192.168.1.8/CRUDPHP/update.php"; // Assuming your server is running locally
 
-    EditText name, email;
-    Button button;
-    String TempName, TempEmail;
+    EditText id, name, email;
+    Button submitButton, updateButton;
+    String TempID, TempName, TempEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        name = findViewById(R.id.editText2);
-        email = findViewById(R.id.editText3);
-        button = findViewById(R.id.button);
+        id = findViewById(R.id.editText);
+        name = findViewById(R.id.editText1);
+        email = findViewById(R.id.editText2);
+        submitButton = findViewById(R.id.button);
+        updateButton = findViewById(R.id.update);
 
-        button.setOnClickListener(new View.OnClickListener() {
+        submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 GetData();
@@ -43,20 +46,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                GetData();
+                UpdateData();
+            }
+        });
     }
 
     public void GetData() {
+        TempID = id.getText().toString();
         TempName = name.getText().toString();
         TempEmail = email.getText().toString();
     }
 
     public void InsertData() {
-
-            class SendPostReqAsyncTask extends AsyncTask<Void, Void, String> {
-                @Override
-                protected String doInBackground(Void... voids) {
-                    String NameHolder = TempName;
-                    String EmailHolder = TempEmail;
+        class SendPostReqAsyncTask extends AsyncTask<Void, Void, String> {
+            @Override
+            protected String doInBackground(Void... voids) {
+                String IDHolder = TempID;
+                String NameHolder = TempName;
+                String EmailHolder = TempEmail;
 
                 try {
                     URL url = new URL(SERVER_URL);
@@ -68,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
 
                     HashMap<String, String> postDataParams = new HashMap<>();
+                    postDataParams.put("id", IDHolder);
                     postDataParams.put("name", NameHolder);
                     postDataParams.put("email", EmailHolder);
 
@@ -85,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                     bufferedWriter.close();
                     outputStream.close();
 
-                    int responseCode=httpURLConnection.getResponseCode();
+                    int responseCode = httpURLConnection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         return "Data Inserted Successfully";
                     } else {
@@ -105,6 +117,70 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(MainActivity.this, "Error inserting data", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+        SendPostReqAsyncTask sendPostReqAsyncTask = new SendPostReqAsyncTask();
+        sendPostReqAsyncTask.execute();
+    }
+
+    public void UpdateData() {
+        class SendPostReqAsyncTask extends AsyncTask<Void, Void, String> {
+            @Override
+            protected String doInBackground(Void... voids) {
+                String IDHolder = id.getText().toString();  // Fetching updated ID from EditText directly
+                String NameHolder = name.getText().toString();
+                String EmailHolder = email.getText().toString();
+
+                try {
+                    URL url = new URL(UPDATE_URL);
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setDoOutput(true);
+
+                    OutputStream outputStream = httpURLConnection.getOutputStream();
+                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+
+                    HashMap<String, String> postDataParams = new HashMap<>();
+                    postDataParams.put("id", IDHolder);
+                    postDataParams.put("name", NameHolder);
+                    postDataParams.put("email", EmailHolder);
+
+                    StringBuilder postData = new StringBuilder();
+                    for (Map.Entry<String, String> param : postDataParams.entrySet()) {
+                        if (postData.length() != 0)
+                            postData.append('&');
+                        postData.append(URLEncoder.encode(param.getKey(), "UTF-8"));
+                        postData.append('=');
+                        postData.append(URLEncoder.encode(param.getValue(), "UTF-8"));
+                    }
+
+                    bufferedWriter.write(postData.toString());
+                    bufferedWriter.flush();
+                    bufferedWriter.close();
+                    outputStream.close();
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        return "Data Updated Successfully";
+                    } else {
+                        return "Error: " + responseCode;
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String result) {
+                super.onPostExecute(result);
+                if (result != null) {
+                    Toast.makeText(MainActivity.this, result, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Error updating data", Toast.LENGTH_LONG).show();
                 }
             }
         }
