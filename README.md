@@ -1,5 +1,4 @@
 Hello, A simple android studio 
 
-Create and Update 
-
-Delete will be done soon
+Create and Update, Delete 
+Just Updated it!
